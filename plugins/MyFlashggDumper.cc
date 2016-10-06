@@ -38,9 +38,17 @@
 // constructor "usesResource("TFileService");"
 // This will improve performance in multithreaded jobs.
 
+//FLASHgg files
+#include "flashgg/DataFormats/interface/DiPhotonCandidate.h"
+#include "flashgg/DataFormats/interface/SinglePhotonView.h"
+#include "flashgg/DataFormats/interface/Photon.h"
+#include "flashgg/DataFormats/interface/Jet.h"
+
 class MyFlashggDumper : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:
       explicit MyFlashggDumper(const edm::ParameterSet&);
+      typedef std::vector<edm::Handle<edm::View<flashgg::Jet> > > JetCollectionVector;
+
       ~MyFlashggDumper();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
@@ -52,6 +60,10 @@ class MyFlashggDumper : public edm::one::EDAnalyzer<edm::one::SharedResources>  
       virtual void endJob() override;
 
       // ----------member data ---------------------------
+   std::vector<edm::InputTag> inputTagJets_;
+   std::vector<edm::EDGetTokenT<edm::View<flashgg::Jet> > > tokenJets_;
+
+
 };
 
 //
@@ -70,6 +82,11 @@ MyFlashggDumper::MyFlashggDumper(const edm::ParameterSet& iConfig)
 {
    //now do what ever initialization is needed
    usesResource("TFileService");
+
+    for (unsigned i = 0 ; i < inputTagJets_.size() ; i++) {
+        auto token = consumes<edm::View<flashgg::Jet> >(inputTagJets_[i]);
+        tokenJets_.push_back(token);
+    }
 
 }
 
@@ -93,17 +110,21 @@ MyFlashggDumper::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
 {
    using namespace edm;
 
+   JetCollectionVector theJetsCols( inputTagJets_.size() );
+   for( size_t j = 0; j < inputTagJets_.size(); ++j ) {
+      iEvent.getByToken( tokenJets_[j], theJetsCols[j] );
+   }
 
+   std::cout << "Number of jet collections!!!! " << theJetsCols.size() << std::endl;
 
-#ifdef THIS_IS_AN_EVENT_EXAMPLE
-   Handle<ExampleData> pIn;
-   iEvent.getByLabel("example",pIn);
-#endif
-   
-#ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
-   ESHandle<SetupData> pSetup;
-   iSetup.get<SetupRecord>().get(pSetup);
-#endif
+   if( theJetsCols.size() < 1 ) return;
+
+   std::cout << "Number of jets in 0th jet collection!!!! " << theJetsCols[0]->size() << std::endl;
+
+   if( theJetsCols[0]->size() < 1) return;
+
+   std::cout << "Pt of 0th jet in 0th jet col: " << theJetsCols[0]->ptrAt(0)->pt() << std::endl;
+
 }
 
 
