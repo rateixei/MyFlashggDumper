@@ -77,8 +77,8 @@ class MyFlashggDumper : public edm::one::EDAnalyzer<edm::one::SharedResources>  
 //
 // constructors and destructor
 //
-MyFlashggDumper::MyFlashggDumper(const edm::ParameterSet& iConfig)
-
+MyFlashggDumper::MyFlashggDumper(const edm::ParameterSet& iConfig) : 
+inputTagJets_( iConfig.getParameter<std::vector<edm::InputTag> >( "inputTagJets" ) )
 {
    //now do what ever initialization is needed
    usesResource("TFileService");
@@ -115,6 +115,8 @@ MyFlashggDumper::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
       iEvent.getByToken( tokenJets_[j], theJetsCols[j] );
    }
 
+   std::cout << "--- New Event! ---" << std::endl;
+
    std::cout << "Number of jet collections!!!! " << theJetsCols.size() << std::endl;
 
    if( theJetsCols.size() < 1 ) return;
@@ -124,6 +126,16 @@ MyFlashggDumper::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
    if( theJetsCols[0]->size() < 1) return;
 
    std::cout << "Pt of 0th jet in 0th jet col: " << theJetsCols[0]->ptrAt(0)->pt() << std::endl;
+   //user floats
+   std::cout << "0th jet user floats: " << std::endl;
+   size_t nfloats = theJetsCols[0]->ptrAt(0)->userFloatNames().size();
+   for ( size_t nf = 0; nf < nfloats; nf++) {
+      std::string thisUserFloatName = theJetsCols[0]->ptrAt(0)->userFloatNames()[nf];
+      std::cout << "\t User float: " << thisUserFloatName << "  -  value: " << theJetsCols[0]->ptrAt(0)->userFloat(thisUserFloatName) << std::endl;
+
+   }
+
+   std::cout << "--- End Event! ---" << std::endl;
 
 }
 
